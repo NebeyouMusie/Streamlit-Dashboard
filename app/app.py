@@ -34,127 +34,6 @@ all_months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov",
 with st.expander("Data Preview"):
     st.dataframe(df, column_config={"Year": st.column_config.NumberColumn(format="%d")})
 
-# Visualizations
-def plot_top_right():
-    sales_data = duckdb.sql(
-        f"""
-        WITH sales_data AS (
-            UNPIVOT ( 
-                SELECT 
-                    Scenario,
-                    business_unit,
-                    {','.join(all_months)} 
-                    FROM df 
-                    WHERE Year='2023' 
-                    AND Account='Sales' 
-                ) 
-            ON {','.join(all_months)}
-            INTO
-                NAME month
-                VALUE sales
-        ),
-
-        aggregated_sales AS (
-            SELECT
-                Scenario,
-                business_unit,
-                SUM(sales) AS sales
-            FROM sales_data
-            GROUP BY Scenario, business_unit
-        )
-        
-        SELECT * FROM aggregated_sales
-        """
-    ).df()
-
-    fig = px.bar(
-        sales_data,
-        x="business_unit",
-        y="sales",
-        color="Scenario",
-        barmode="group",
-        text_auto=".2s",
-        title="Sales for Year 2023",
-        height=400,
-    )
-    fig.update_traces(
-        textfont_size=12, textangle=0, textposition="outside", cliponaxis=False
-    )
-    return fig
-
-def plot_bottom_left():
-    sales_data = duckdb.sql(
-        f"""
-        WITH sales_data AS (
-            SELECT 
-            Scenario,{','.join(all_months)} 
-            FROM df 
-            WHERE Year='2023' 
-            AND Account='Sales'
-            AND business_unit='Software'
-        )
-
-        UNPIVOT sales_data 
-        ON {','.join(all_months)}
-        INTO
-            NAME month
-            VALUE sales
-    """
-    ).df()
-
-    fig = px.line(
-        sales_data,
-        x="month",
-        y="sales",
-        color="Scenario",
-        markers=True,
-        text="sales",
-        title="Monthly Budget vs Forecast 2023",
-    )
-    fig.update_traces(textposition="top center")
-    
-    return fig
-
-
-def plot_bottom_right():
-    sales_data = duckdb.sql(
-        f"""
-        WITH sales_data AS (
-            UNPIVOT ( 
-                SELECT 
-                    Account,Year,{','.join([f'ABS({month}) AS {month}' for month in all_months])}
-                    FROM df 
-                    WHERE Scenario='Actuals'
-                    AND Account!='Sales'
-                ) 
-            ON {','.join(all_months)}
-            INTO
-                NAME year
-                VALUE sales
-        ),
-
-        aggregated_sales AS (
-            SELECT
-                Account,
-                Year,
-                SUM(sales) AS sales
-            FROM sales_data
-            GROUP BY Account, Year
-        )
-        
-        SELECT * FROM aggregated_sales
-    """
-    ).df()
-
-    fig = px.bar(
-        sales_data,
-        x="Year",
-        y="sales",
-        color="Account",
-        title="Actual Yearly Sales Per Account",
-    )
-    
-    return fig
   
 
 # Streamlit Layout
@@ -204,13 +83,13 @@ with top_left_column:
         st.plotly_chart(fig_2, use_container_width=True)
 
 with top_right_column:
-    fig = plot_top_right()
+    fig = plot_top_right(df, all_months)
     st.plotly_chart(fig, use_container_width=True)
 
 with bottom_left_column:
-    fig = plot_bottom_left()
+    fig = plot_bottom_left(df, all_months)
     st.plotly_chart(fig, use_container_width=True)
 
 with bottom_right_column:
-    fig = plot_bottom_right()
+    fig = plot_bottom_right(df, all_months)
     st.plotly_chart(fig, use_container_width=True)        

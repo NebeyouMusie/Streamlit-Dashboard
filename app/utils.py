@@ -80,7 +80,7 @@ def plot_gauge(
     
     return fig
 
-def plot_top_right():
+def plot_top_right(df, all_months):
     sales_data = duckdb.sql(
         f"""
         WITH sales_data AS (
@@ -127,7 +127,7 @@ def plot_top_right():
     )
     return fig
 
-def plot_bottom_left():
+def plot_bottom_left(df, all_months):
     sales_data = duckdb.sql(
         f"""
         WITH sales_data AS (
@@ -161,7 +161,7 @@ def plot_bottom_left():
     return fig
 
 
-def plot_bottom_right():
+def plot_bottom_right(df, all_months):
     sales_data = duckdb.sql(
         f"""
         WITH sales_data AS (
