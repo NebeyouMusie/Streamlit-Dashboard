@@ -33,7 +33,129 @@ all_months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov",
 
 with st.expander("Data Preview"):
     st.dataframe(df, column_config={"Year": st.column_config.NumberColumn(format="%d")})
+
+# Visualizations
+def plot_top_right():
+    sales_data = duckdb.sql(
+        f"""
+        WITH sales_data AS (
+            UNPIVOT ( 
+                SELECT 
+                    Scenario,
+                    business_unit,
+                    {','.join(all_months)} 
+                    FROM df 
+                    WHERE Year='2023' 
+                    AND Account='Sales' 
+                ) 
+            ON {','.join(all_months)}
+            INTO
+                NAME month
+                VALUE sales
+        ),
+
+        aggregated_sales AS (
+            SELECT
+                Scenario,
+                business_unit,
+                SUM(sales) AS sales
+            FROM sales_data
+            GROUP BY Scenario, business_unit
+        )
+        
+        SELECT * FROM aggregated_sales
+        """
+    ).df()
+
+    fig = px.bar(
+        sales_data,
+        x="business_unit",
+        y="sales",
+        color="Scenario",
+        barmode="group",
+        text_auto=".2s",
+        title="Sales for Year 2023",
+        height=400,
+    )
+    fig.update_traces(
+        textfont_size=12, textangle=0, textposition="outside", cliponaxis=False
+    )
+    return fig
+
+def plot_bottom_left():
+    sales_data = duckdb.sql(
+        f"""
+        WITH sales_data AS (
+            SELECT 
+            Scenario,{','.join(all_months)} 
+            FROM df 
+            WHERE Year='2023' 
+            AND Account='Sales'
+            AND business_unit='Software'
+        )
+
+        UNPIVOT sales_data 
+        ON {','.join(all_months)}
+        INTO
+            NAME month
+            VALUE sales
+    """
+    ).df()
+
+    fig = px.line(
+        sales_data,
+        x="month",
+        y="sales",
+        color="Scenario",
+        markers=True,
+        text="sales",
+        title="Monthly Budget vs Forecast 2023",
+    )
+    fig.update_traces(textposition="top center")
     
+    return fig
+
+
+def plot_bottom_right():
+    sales_data = duckdb.sql(
+        f"""
+        WITH sales_data AS (
+            UNPIVOT ( 
+                SELECT 
+                    Account,Year,{','.join([f'ABS({month}) AS {month}' for month in all_months])}
+                    FROM df 
+                    WHERE Scenario='Actuals'
+                    AND Account!='Sales'
+                ) 
+            ON {','.join(all_months)}
+            INTO
+                NAME year
+                VALUE sales
+        ),
+
+        aggregated_sales AS (
+            SELECT
+                Account,
+                Year,
+                SUM(sales) AS sales
+            FROM sales_data
+            GROUP BY Account, Year
+        )
+        
+        SELECT * FROM aggregated_sales
+    """
+    ).df()
+
+    fig = px.bar(
+        sales_data,
+        x="Year",
+        y="sales",
+        color="Account",
+        title="Actual Yearly Sales Per Account",
+    )
+    
+    return fig
+  
 
 # Streamlit Layout
 
@@ -44,5 +166,51 @@ with top_left_column:
     column_1, column_2, column_3, column_4 = st.columns(4)
     
     with column_1:
-        fig_1 = plot_metric("Receivable Accounts", 6621280, prefix="$", suffix="", show_graph=True, color_graph="rgba(0, 104, 201, 0.2)")
+        fig_1 =  plot_metric(
+            "Total Accounts Receivable",
+            6621280,
+            prefix="$",
+            suffix="",
+            show_graph=True,
+            color_graph="rgba(0, 104, 201, 0.2)",
+        )
         st.plotly_chart(fig_1, use_container_width=True)
+        fig_2 = plot_gauge(1.86, "#0068C9", "%", "Current Ratio", 3)
+        st.plotly_chart(fig_2, use_container_width=True)
+    
+    with column_2:
+        fig_1 =  plot_metric(
+            "Total Accounts Payable",
+            1630270,
+            prefix="$",
+            suffix="",
+            show_graph=True,
+            color_graph="rgba(255, 43, 43, 0.2)",
+        )
+        st.plotly_chart(fig_1, use_container_width=True)
+        fig_2 = plot_gauge(10, "#FF8700", " days", "In Stock", 31)
+        st.plotly_chart(fig_2, use_container_width=True)
+        
+    with column_3:
+        fig_1 = plot_metric("Equity Ratio", 75.38, prefix="", suffix=" %", show_graph=False)
+        st.plotly_chart(fig_1, use_container_width=True)
+        fig_2 = plot_gauge(7, "#FF2B2B", " days", "Out Stock", 31)
+        st.plotly_chart(fig_2, use_container_width=True)
+        
+    with column_4:
+        fig_1 = plot_metric("Debt Equity", 1.10, prefix="", suffix=" %", show_graph=False)
+        st.plotly_chart(fig_1, use_container_width=True)
+        fig_2 = plot_gauge(28, "#29B09D", " days", "Delay", 31)
+        st.plotly_chart(fig_2, use_container_width=True)
+
+with top_right_column:
+    fig = plot_top_right()
+    st.plotly_chart(fig, use_container_width=True)
+
+with bottom_left_column:
+    fig = plot_bottom_left()
+    st.plotly_chart(fig, use_container_width=True)
+
+with bottom_right_column:
+    fig = plot_bottom_right()
+    st.plotly_chart(fig, use_container_width=True)        

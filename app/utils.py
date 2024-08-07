@@ -4,6 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 
+
 def plot_metric(label, value, prefix="", suffix="", show_graph=False, color_graph=""):
     fig = go.Figure()
     
@@ -15,11 +16,11 @@ def plot_metric(label, value, prefix="", suffix="", show_graph=False, color_grap
                 "prefix": prefix,
                 "suffix": suffix,
                 "font.size": 28,
-                "font.color": "black",
+                # "font.color": "black",
             },
             title={
                 "text": label,
-                "font": {"size": 18, "color": "black"},
+                "font": {"size": 18},
                 
             },
         )
@@ -44,7 +45,7 @@ def plot_metric(label, value, prefix="", suffix="", show_graph=False, color_grap
         # paper_bgcolor="lightgrey"
         margin=dict(t=30, b=0),
         showlegend=False,
-        plot_bgcolor="white",
+        plot_bgcolor="grey",
         height=100,
     )
     
@@ -80,7 +81,7 @@ def plot_gauge(
     
     return fig
 
-def plot_top_right(all_months):
+def plot_top_right(df, all_months):
     sales_data = duckdb.sql(
         f"""
         WITH sales_data AS (
@@ -127,7 +128,7 @@ def plot_top_right(all_months):
     )
     return fig
 
-def plot_bottom_left(all_months):
+def plot_bottom_left(df, all_months):
     sales_data = duckdb.sql(
         f"""
         WITH sales_data AS (
@@ -157,10 +158,11 @@ def plot_bottom_left(all_months):
         title="Monthly Budget vs Forecast 2023",
     )
     fig.update_traces(textposition="top center")
+    
     return fig
 
 
-def plot_bottom_right(all_months):
+def plot_bottom_right(df, all_months):
     sales_data = duckdb.sql(
         f"""
         WITH sales_data AS (
