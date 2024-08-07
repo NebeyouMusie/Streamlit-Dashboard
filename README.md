@@ -4,7 +4,7 @@
 ![Streamlit Dashboard App Image](./images/image1.png)
 
 ## DEMO
- - You can try the project live [here](https://8501-01j0bv4h1g771v2shtqjfpr66t.cloudspaces.litng.ai/)
+ - You can try the project live [here](https://s-dashboard.streamlit.app/)
 
 ## Libraries Used
  - plotly
