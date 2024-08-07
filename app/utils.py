@@ -15,10 +15,12 @@ def plot_metric(label, value, prefix="", suffix="", show_graph=False, color_grap
                 "prefix": prefix,
                 "suffix": suffix,
                 "font.size": 28,
+                "font.color": "black",
             },
             title={
                 "text": label,
-                "font": {"size": 24},
+                "font": {"size": 18, "color": "black"},
+                
             },
         )
     )
